@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "qmc2-crypto",
+    "qmc2-cli"
+]
