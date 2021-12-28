@@ -2,7 +2,7 @@
 //! Notably, it uses a different round number and adds a tweaked CBC mode.
 
 use super::errors::CryptoError;
-use super::utils_stream::StreamHelper;
+use super::stream_utils::StreamExt;
 
 const ROUNDS: u32 = 16;
 const SALT_LEN: usize = 2;
@@ -10,19 +10,17 @@ const ZERO_LEN: usize = 7;
 const MINIMUM_ENCRYPTED_TEA_LEN: usize = 1 + SALT_LEN + ZERO_LEN;
 const DELTA: u32 = 0x9e3779b9;
 
-#[inline]
 /// Perform a single round of wrapping arithmetics
+#[inline]
 fn tea_single_round(value: u32, sum: u32, key1: u32, key2: u32) -> u32 {
     // z -= ((y << 4) + k[2]) ^ (y + sum) ^ ((y >> 5) + k[3]);
     // y -= ((z << 4) + k[0]) ^ (z + sum) ^ ((z >> 5) + k[1]);
-    value.wrapping_shl(4).wrapping_add(key1)
-        ^ sum.wrapping_add(value)
-        ^ value.wrapping_shr(5).wrapping_add(key2)
+    (value << 4).wrapping_add(key1) ^ sum.wrapping_add(value) ^ (value >> 5).wrapping_add(key2)
 }
 
-#[inline]
 /// Perform a single operation of tea's ecb decryption.
-fn tea_decrypt_ecb(block: &mut [u8], key: &[u8; 16]) {
+#[inline]
+fn tea_decrypt_ecb(block: &mut [u8; 8], key: &[u8; 16]) {
     let mut k = [0u32; 4];
     for (i, k) in k.iter_mut().enumerate() {
         *k = key.read_u32_be(i * 4);
@@ -60,24 +58,23 @@ pub fn oi_symmetry_decrypt2(input: &[u8], key: &[u8; 16]) -> Result<Vec<u8>, Cry
         ));
     }
 
-    let mut decrypted_buf = input.to_vec();
+    let mut decrypted_buf = input.to_vec().into_boxed_slice();
 
     // Decrypt blocks
-    tea_decrypt_ecb(&mut decrypted_buf[0..8], key);
+    tea_decrypt_ecb((&mut decrypted_buf[0..8]).try_into().unwrap(), key);
     for i in (8..len).step_by(8) {
         for j in i..i + 8 {
             decrypted_buf[j] ^= decrypted_buf[j - 8];
         }
-        tea_decrypt_ecb(&mut decrypted_buf[i..i + 8], key);
-    }
-    // Finalise. First block xor with ZERO iv, so we can skip.
-    for i in (8..len).step_by(8) {
-        for j in i..i + 8 {
-            decrypted_buf[j] ^= input[j - 8];
-        }
+        tea_decrypt_ecb((&mut decrypted_buf[i..i + 8]).try_into().unwrap(), key);
     }
 
-    let pad_size = usize::from(decrypted_buf[0] & 0b111);
+    // Finalise. First block xor with ZERO iv, so we can skip.
+    for i in 8..len {
+        decrypted_buf[i] ^= input[i - 8];
+    }
+
+    let pad_size = (decrypted_buf[0] & 0b111) as usize;
 
     // Prefixed with "pad_size", "padding", "salt"
     let start_loc = 1 + pad_size + SALT_LEN;
@@ -86,9 +83,9 @@ pub fn oi_symmetry_decrypt2(input: &[u8], key: &[u8; 16]) -> Result<Vec<u8>, Cry
 
     // I know this is not constant time comparison, but anyway...
     if zeros.iter().all(|&x| x == 0) {
-        Ok(decrypted_buf[start_loc..end_loc].to_vec())
+        Ok(decrypted_buf[start_loc..end_loc].to_vec()) // potential optimization here (Box<[u8]>)
     } else {
-        Err(CryptoError::TEAZeroVerificationError())
+        Err(CryptoError::TEAZeroVerificationError)
     }
 }
 
@@ -103,12 +100,9 @@ mod tests {
             0x6b, 0x41, 0x4b, 0x50, 0xd1, 0xa5, 0xb8, 0x4e, //
             0xc5, 0x0d, 0x0c, 0x1b, 0x11, 0x96, 0xfd, 0x3c, //
         ];
-        let key = [
-            b'1', 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, // 1-8
-            b'A', 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, // A-H
-        ];
+        let key = b"12345678ABCDEFGH";
 
         let result = oi_symmetry_decrypt2(&input, &key);
-        assert_eq!(result.unwrap(), [1u8, 2, 3, 4, 5, 6, 7, 8]);
+        assert_eq!(result.unwrap(), [1, 2, 3, 4, 5, 6, 7, 8]);
     }
 }

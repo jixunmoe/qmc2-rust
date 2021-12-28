@@ -1,5 +1,3 @@
-extern crate base64;
-
 use super::errors::CryptoError;
 use super::tc_tea;
 
@@ -16,10 +14,10 @@ fn simple_make_key(seed: u8, size: usize) -> Vec<u8> {
 }
 
 pub fn parse_ekey(ekey: &str) -> Result<Vec<u8>, CryptoError> {
-    let ekey_decoded = base64::decode(ekey).map_err(|_| CryptoError::EKeyParseError())?;
+    let ekey_decoded = base64::decode(ekey).map_err(|_| CryptoError::EKeyParseError)?;
 
     if ekey_decoded.len() < 8 {
-        return Err(CryptoError::EKeyParseError());
+        return Err(CryptoError::EKeyParseError);
     }
 
     let simple_key_buf = simple_make_key(106, 8);
@@ -31,7 +29,7 @@ pub fn parse_ekey(ekey: &str) -> Result<Vec<u8>, CryptoError> {
     }
 
     let mut raw_key = tc_tea::oi_symmetry_decrypt2(&ekey_decoded[8..], &tea_key)
-        .map_err(|_| CryptoError::QMC2KeyDeriveError())?;
+        .map_err(|_| CryptoError::QMC2KeyDeriveError)?;
     let mut result = Vec::from(&ekey_decoded[0..8]);
     result.append(&mut raw_key);
 
