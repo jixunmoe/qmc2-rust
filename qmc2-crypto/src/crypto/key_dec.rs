@@ -16,10 +16,7 @@ fn simple_make_key(seed: u8, size: usize) -> Vec<u8> {
 }
 
 pub fn parse_ekey(ekey: &str) -> Result<Vec<u8>, CryptoError> {
-    let ekey_decoded = match base64::decode(ekey) {
-        Ok(x) => x,
-        Err(_) => return Err(CryptoError::EKeyParseError()),
-    };
+    let ekey_decoded = base64::decode(ekey).map_err(|_| CryptoError::EKeyParseError())?;
 
     if ekey_decoded.len() < 8 {
         return Err(CryptoError::EKeyParseError());
@@ -33,10 +30,8 @@ pub fn parse_ekey(ekey: &str) -> Result<Vec<u8>, CryptoError> {
         tea_key[i + 1] = ekey_decoded[i / 2];
     }
 
-    let mut raw_key = match tc_tea::oi_symmetry_decrypt2(&ekey_decoded[8..], &tea_key) {
-        Ok(key) => key,
-        Err(_) => return Err(CryptoError::QMC2KeyDeriveError()),
-    };
+    let mut raw_key = tc_tea::oi_symmetry_decrypt2(&ekey_decoded[8..], &tea_key)
+        .map_err(|_| CryptoError::QMC2KeyDeriveError())?;
     let mut result = Vec::from(&ekey_decoded[0..8]);
     result.append(&mut raw_key);
 

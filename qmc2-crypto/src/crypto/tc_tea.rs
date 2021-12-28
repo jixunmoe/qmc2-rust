@@ -85,11 +85,11 @@ pub fn oi_symmetry_decrypt2(input: &[u8], key: &[u8; 16]) -> Result<Vec<u8>, Cry
     let zeros = &decrypted_buf[end_loc..];
 
     // I know this is not constant time comparison, but anyway...
-    return if zeros.iter().all(|&x| x == 0) {
+    if zeros.iter().all(|&x| x == 0) {
         Ok(decrypted_buf[start_loc..end_loc].to_vec())
     } else {
         Err(CryptoError::TEAZeroVerificationError())
-    };
+    }
 }
 
 #[cfg(test)]
