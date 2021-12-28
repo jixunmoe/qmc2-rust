@@ -61,12 +61,3 @@ impl fmt::Display for DetectionError {
         }
     }
 }
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CommaNotFound {}
-
-impl fmt::Display for CommaNotFound {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "comma not found")
-    }
-}

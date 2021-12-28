@@ -1,6 +1,6 @@
 use crate::crypto::utils_stream::StreamHelper;
+use std::str::from_utf8;
 
-use super::errors::CommaNotFound;
 use super::errors::DetectionError;
 
 pub struct Detection<'a> {
@@ -13,14 +13,14 @@ pub struct Detection<'a> {
 // 'QTag' in LittleEndian
 const MAGIC_QMC2_QTAG: u32 = 0x67615451;
 
-fn find_comma(buf: &[u8], start: usize, end: usize) -> Result<usize, CommaNotFound> {
+fn find_comma(buf: &[u8], start: usize, end: usize) -> Option<usize> {
     for (i, &byte) in buf[start..end].iter().enumerate() {
         if byte == b',' {
-            return Ok(i + start);
+            return Some(i + start);
         }
     }
 
-    Err(CommaNotFound {})
+    None
 }
 
 pub const RECOMMENDED_DETECTION_SIZE: usize = 0x40;
@@ -50,15 +50,14 @@ fn detect_v2(buf: &[u8]) -> Result<Detection, DetectionError> {
     let search_start_idx = if ekey_loc > 0 { ekey_loc as usize } else { 0 };
     // Locate the end of ekey (where the comma is)...
     let ekey_end_loc = find_comma(buf, search_start_idx, end_of_meta_loc)
-        .map_err(|_| DetectionError::CouldNotIdentifyEndOfEKey())?;
+        .ok_or(DetectionError::CouldNotIdentifyEndOfEKey())?;
     let ekey_len = (ekey_end_loc as i64 - ekey_loc) as usize;
 
     // The song id come right after the key, seperated by a comma ","
     let song_id_loc = ekey_end_loc + 1;
     // Ignore if song id extraction failed.
     let song_id = find_comma(buf, song_id_loc, end_of_meta_loc)
-        .ok()
-        .and_then(|end| std::str::from_utf8(&buf[song_id_loc..end]).ok())
+        .and_then(|end| from_utf8(&buf[song_id_loc..end]).ok())
         .unwrap_or_default();
 
     Ok(Detection {
