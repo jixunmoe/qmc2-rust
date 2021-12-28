@@ -51,7 +51,7 @@ fn detect_v2(buf: &[u8]) -> Result<Detection, DetectionError> {
     let search_start_idx = if ekey_loc > 0 { ekey_loc as usize } else { 0 };
     // Locate the end of ekey (where the comma is)...
     let ekey_end_loc = find_comma(buf, search_start_idx, end_of_meta_loc)
-        .ok_or(DetectionError::CouldNotIdentifyEndOfEKey())?;
+        .ok_or(DetectionError::CouldNotIdentifyEndOfEKey)?;
     let ekey_len = (ekey_end_loc as i64 - ekey_loc) as usize;
 
     // The song id come right after the key, seperated by a comma ","
@@ -71,7 +71,7 @@ fn detect_v2(buf: &[u8]) -> Result<Detection, DetectionError> {
 
 pub fn detect(buf: &[u8]) -> Result<Detection, DetectionError> {
     if buf.len() < 8 {
-        return Err(DetectionError::BufferTooSmall());
+        return Err(DetectionError::BufferTooSmall);
     }
 
     // QMC2 v2: eof_magic is string "QTag"
@@ -88,7 +88,7 @@ pub fn detect(buf: &[u8]) -> Result<Detection, DetectionError> {
     }
 
     if eof_magic == 0 {
-        Err(DetectionError::ZerosAtEOF())
+        Err(DetectionError::ZerosAtEOF)
     } else {
         Err(DetectionError::UnknownMagicLE32(eof_magic))
     }
@@ -102,10 +102,10 @@ mod tests {
     fn test_detection_small_buffer_boundary_check() {
         assert_eq!(
             detect(&[0u8; 7]).unwrap_err(),
-            DetectionError::BufferTooSmall()
+            DetectionError::BufferTooSmall
         );
 
-        assert_eq!(detect(&[0u8; 8]).unwrap_err(), DetectionError::ZerosAtEOF());
+        assert_eq!(detect(&[0u8; 8]).unwrap_err(), DetectionError::ZerosAtEOF);
     }
 
     #[test]
