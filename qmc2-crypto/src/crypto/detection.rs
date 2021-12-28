@@ -47,23 +47,19 @@ fn detect_v2(buf: &[u8]) -> Result<Detection, DetectionError> {
 
     // ekey_loc can be negative - which means it will be before the detection buffer.
     let ekey_loc = end_of_meta_loc as i64 - meta_size as i64;
-    let search_start_idx = std::cmp::max(ekey_loc, 0) as usize;
+    let search_start_idx = if ekey_loc > 0 { ekey_loc as usize } else { 0 };
     // Locate the end of ekey (where the comma is)...
-    let ekey_end_loc = match find_comma(buf, search_start_idx, end_of_meta_loc) {
-        Ok(x) => x,
-        Err(_) => return Err(DetectionError::CouldNotIdentifyEndOfEKey()),
-    };
+    let ekey_end_loc = find_comma(buf, search_start_idx, end_of_meta_loc)
+        .map_err(|_| DetectionError::CouldNotIdentifyEndOfEKey())?;
     let ekey_len = (ekey_end_loc as i64 - ekey_loc) as usize;
 
     // The song id come right after the key, seperated by a comma ","
     let song_id_loc = ekey_end_loc + 1;
     // Ignore if song id extraction failed.
-    // FIXME: This looks ugly.
-    let song_id = match find_comma(buf, song_id_loc, end_of_meta_loc) {
-        Ok(end_loc) => std::str::from_utf8(&buf[song_id_loc..end_loc]),
-        Err(_) => Ok(""),
-    }
-    .unwrap_or_default();
+    let song_id = find_comma(buf, song_id_loc, end_of_meta_loc)
+        .ok()
+        .and_then(|end| std::str::from_utf8(&buf[song_id_loc..end]).ok())
+        .unwrap_or_default();
 
     Ok(Detection {
         eof_position: ekey_loc,
