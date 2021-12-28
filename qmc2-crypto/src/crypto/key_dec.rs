@@ -1,5 +1,3 @@
-extern crate base64;
-
 use super::errors::CryptoError;
 use super::tc_tea;
 

@@ -1,5 +1,3 @@
-extern crate static_assertions;
-
 use super::qmc2_base::QMC2Crypto;
 
 const FIRST_SEGMENT_SIZE: usize = 0x80;
