@@ -1,4 +1,4 @@
-use crate::crypto::utils_stream::StreamHelper;
+use crate::crypto::stream_utils::StreamExt;
 use std::str::from_utf8;
 
 use super::errors::DetectionError;

@@ -1,8 +1,8 @@
+mod crypto;
+
 pub use crypto::detection;
 pub use crypto::errors::CryptoError;
 pub use crypto::qmc2::decrypt_factory;
-
-mod crypto;
 
 #[cfg(test)]
 mod tests {

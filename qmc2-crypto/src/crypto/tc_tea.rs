@@ -2,7 +2,7 @@
 //! Notably, it uses a different round number and adds a tweaked CBC mode.
 
 use super::errors::CryptoError;
-use super::utils_stream::StreamHelper;
+use super::stream_utils::StreamExt;
 
 const ROUNDS: u32 = 16;
 const SALT_LEN: usize = 2;

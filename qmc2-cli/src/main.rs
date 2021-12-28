@@ -1,5 +1,3 @@
-extern crate qmc2_crypto;
-
 use qmc2_crypto::detection::RECOMMENDED_DETECTION_SIZE;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
