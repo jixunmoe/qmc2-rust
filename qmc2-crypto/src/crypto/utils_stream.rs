@@ -33,9 +33,24 @@ mod tests {
 
     #[test]
     fn read_u32_be_test() {
-        let v1: &[u8] = &[1, 2, 3, 4];
-        let v2: &[u8] = &[0x7f, 0xff, 0xee, 0xdd, 0xcc];
-        assert_eq!(0x01020304, v1.read_u32_be(0));
-        assert_eq!(0xffeeddcc, v2.read_u32_be(1));
+        let v1 = [1, 2, 3, 4];
+        let v2 = [0x7f, 0xff, 0xee, 0xdd, 0xcc];
+        assert_eq!(v1.read_u32_be(0), 0x01020304);
+        assert_eq!(v2.read_u32_be(1), 0xffeeddcc);
+    }
+
+    #[test]
+    fn read_u32_le_test() {
+        let v1 = [1, 2, 3, 4];
+        let v2 = [0x7f, 0xff, 0xee, 0xdd, 0xcc];
+        assert_eq!(v1.read_u32_le(0), 0x04030201);
+        assert_eq!(v2.read_u32_le(1), 0xccddeeff);
+    }
+
+    #[test]
+    fn test_write_u32_be() {
+        let v2 = &mut [0x7fu8, 0xff, 0xee, 0xdd, 0xcc];
+        v2.write_u32_be(0, 0x01020304);
+        assert_eq!(v2, &[1u8, 2, 3, 4, 0xcc]);
     }
 }

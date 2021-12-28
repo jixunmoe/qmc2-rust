@@ -14,13 +14,3 @@ pub fn decrypt_factory(ekey: &str) -> Result<Box<dyn QMC2Crypto>, CryptoError> {
         Box::new(QMCStreamMapCrypto::new(&key))
     })
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn tencent_tea_basic() {
-        // decrypt_factory("aaaabbbbccccdddd");
-    }
-}

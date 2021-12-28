@@ -173,7 +173,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test1_calc_hash_base() {
+    fn test_calc_hash_base() {
         let hash = QMCStreamRC4Crypto::calc_hash_base(&[1u8, 99]);
         assert_eq!(hash, 1);
 
@@ -182,5 +182,90 @@ mod tests {
             0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 16
         ]);
         assert_eq!(hash, 0xfc05fc01);
+    }
+
+    #[test]
+    fn test_decrypt_first_segment() {
+        let mut rc4_key = [0u8; 255];
+        for (i, p) in rc4_key.iter_mut().enumerate() {
+            *p = i as u8
+        }
+        let crypto = QMCStreamRC4Crypto::new(&rc4_key);
+        let mut data = [0u8; 16];
+        crypto.decrypt(0, &mut data);
+        assert_eq!(data, [0, 50, 16, 8, 5, 3, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn test_decrypt_between_first_and_second_segment() {
+        let mut rc4_key = [0u8; 255];
+        for (i, p) in rc4_key.iter_mut().enumerate() {
+            *p = i as u8
+        }
+        let crypto = QMCStreamRC4Crypto::new(&rc4_key);
+        let mut data = [0u8; 16];
+        crypto.decrypt(FIRST_SEGMENT_SIZE - 8, &mut data);
+        assert_eq!(
+            data,
+            [
+                0u8, 0, 0, 0, 0, 0, 0, 0, // first segment
+                141, 97, 122, 193, 166, 101, 233, 214, // after the "first" segment
+            ]
+        );
+    }
+
+    #[test]
+    fn test_decrypt_between_2_segments() {
+        let mut rc4_key = [0u8; 255];
+        for (i, p) in rc4_key.iter_mut().enumerate() {
+            *p = i as u8
+        }
+        let crypto = QMCStreamRC4Crypto::new(&rc4_key);
+        let mut data = [0u8; 16];
+        crypto.decrypt(OTHER_SEGMENT_SIZE - 8, &mut data);
+        assert_eq!(
+            data,
+            [
+                118, 193, 176, 83, 10, 98, 105, 234, // end of first "other" segment
+                151, 56, 198, 1, 226, 173, 127, 4, // second "other" segment
+            ]
+        );
+    }
+
+    #[test]
+    fn test_decrypt_second_segment() {
+        let mut rc4_key = [0u8; 255];
+        for (i, p) in rc4_key.iter_mut().enumerate() {
+            *p = i as u8
+        }
+        let crypto = QMCStreamRC4Crypto::new(&rc4_key);
+        let mut data = [0u8; 16];
+        crypto.decrypt(OTHER_SEGMENT_SIZE, &mut data);
+        assert_eq!(
+            data,
+            [
+                151, 56, 198, 1, 226, 173, 127, 4, // beginning of second "other" segment
+                181, 165, 171, 21, 82, 152, 195, 210, // next 8 bytes, same segment
+            ]
+        );
+    }
+
+    #[test]
+    fn test_decrypt_entire_segment() {
+        let mut rc4_key = [0u8; 255];
+        for (i, p) in rc4_key.iter_mut().enumerate() {
+            *p = i as u8
+        }
+        let crypto = QMCStreamRC4Crypto::new(&rc4_key);
+        let mut data = vec![0u8; OTHER_SEGMENT_SIZE];
+        crypto.decrypt(OTHER_SEGMENT_SIZE, &mut data);
+        // Only checks for the first 16 bytes
+        assert_eq!(
+            data[0..16],
+            [
+                151, 56, 198, 1, 226, 173, 127, 4, // beginning of second "other" segment
+                181, 165, 171, 21, 82, 152, 195, 210, // next 8 bytes, same segment
+            ]
+        );
     }
 }
