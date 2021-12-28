@@ -15,13 +15,10 @@ pub struct Detection<'a> {
 const MAGIC_QMC2_QTAG: u32 = 0x67615451;
 
 fn find_comma(buf: &[u8], start: usize, end: usize) -> Option<usize> {
-    for (i, &byte) in buf[start..end].iter().enumerate() {
-        if byte == b',' {
-            return Some(i + start);
-        }
-    }
-
-    None
+    buf[start..end]
+        .iter()
+        .position(|&b| b == b',')
+        .and_then(|p| Some(p + start))
 }
 
 pub const RECOMMENDED_DETECTION_SIZE: usize = 0x40;
@@ -100,25 +97,20 @@ mod tests {
 
     #[test]
     fn test_detection_small_buffer_boundary_check() {
-        assert_eq!(
-            detect(&[0u8; 7]).unwrap_err(),
-            DetectionError::BufferTooSmall
-        );
-
-        assert_eq!(detect(&[0u8; 8]).unwrap_err(), DetectionError::ZerosAtEOF);
+        assert_eq!(detect(&[0u8; 7]), Err(DetectionError::BufferTooSmall));
+        assert_eq!(detect(&[0u8; 8]), Err(DetectionError::ZerosAtEOF));
     }
 
     #[test]
     fn test_detect_v2_embedded() {
         let input = [
-            // 10 bytes of attached metadata
-            b'a', b'a', b'a', b'a', b',', // ekey
-            b'1', b'8', b',', // song id
-            b'2', b',', // version identifier?
-            // 10 = 0x0A
-            0x00, 0x00, 0x00, 0x0A, // size of metadata (big endian)
-            b'Q', b'T', b'a', b'g', //  EOF Magic
-        ];
+            b"aaaa," as &[u8],     // ekey
+            b"18,",                // song id
+            b"2,",                 // version identifier?
+            &10_i32.to_be_bytes(), // size of metadata (big endian)
+            b"QTag",               // EOF Magic
+        ]
+        .concat();
         let result = detect(&input).unwrap();
         assert_eq!(
             result,
@@ -134,14 +126,13 @@ mod tests {
     #[test]
     fn test_detect_v2_ekey_before_buffer() {
         let input = [
-            // 10 bytes of attached metadata (+16 bytes "before" the buffer)
-            b'a', b'a', b'a', b'a', b',', // ekey
-            b'2', b'7', b',', // song id
-            b'2', b',', // version identifier?
-            // 10 = 0x0A; +16 = 0x1A
-            0x00, 0x00, 0x00, 0x1A, // size of metadata (big endian)
-            b'Q', b'T', b'a', b'g', //  EOF Magic
-        ];
+            b"aaaa," as &[u8],     // ekey
+            b"27,",                // song id
+            b"2,",                 // version identifier?
+            &26_i32.to_be_bytes(), // size of metadata (big endian)
+            b"QTag",               // EOF Magic
+        ]
+        .concat();
         let result = detect(&input).unwrap();
         assert_eq!(
             result,
