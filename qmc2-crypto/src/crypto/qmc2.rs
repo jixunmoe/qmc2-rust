@@ -5,10 +5,7 @@ use super::qmc2_map::QMCStreamMapCrypto;
 use super::qmc2_rc4::QMCStreamRC4Crypto;
 
 pub fn decrypt_factory(ekey: &str) -> Result<Box<dyn QMC2Crypto>, CryptoError> {
-    let key = match key_dec::parse_ekey(ekey) {
-        Ok(x) => x,
-        Err(x) => return Err(x),
-    };
+    let key = key_dec::parse_ekey(ekey)?;
 
     // use RC4 if > 300, otherwise use old xor algorithm.
     Ok(if key.len() > 300 {

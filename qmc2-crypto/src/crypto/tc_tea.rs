@@ -1,3 +1,6 @@
+//! tc_tea (TenCent's TEA) a variant of the standard TEA (Tiny Encryption Algorithm).
+//! Notably, it uses a different round number and adds a tweaked CBC mode.
+
 use super::errors::CryptoError;
 use super::utils_stream::StreamHelper;
 
@@ -8,6 +11,7 @@ const MINIMUM_ENCRYPTED_TEA_LEN: usize = 1 + SALT_LEN + ZERO_LEN;
 const DELTA: u32 = 0x9e3779b9;
 
 #[inline]
+/// Perform a single round of wrapping arithmetics
 fn tea_single_round(value: u32, sum: u32, key1: u32, key2: u32) -> u32 {
     // z -= ((y << 4) + k[2]) ^ (y + sum) ^ ((y >> 5) + k[3]);
     // y -= ((z << 4) + k[0]) ^ (z + sum) ^ ((z >> 5) + k[1]);
@@ -17,6 +21,7 @@ fn tea_single_round(value: u32, sum: u32, key1: u32, key2: u32) -> u32 {
 }
 
 #[inline]
+/// Perform a single operation of tea's ecb decryption.
 fn tea_decrypt_ecb(block: &mut [u8], key: &[u8; 16]) {
     let mut k = [0u32; 4];
     for (i, k) in k.iter_mut().enumerate() {
@@ -38,7 +43,7 @@ fn tea_decrypt_ecb(block: &mut [u8], key: &[u8; 16]) {
     block.write_u32_be(4, z);
 }
 
-/// Decryptes byte stream of the following:
+/// Decrypts a byte array containing the following:
 /// * PadLen  (1 byte)
 /// * Padding (variable, 0-7byte)
 /// * Salt    (2 bytes)
@@ -73,10 +78,13 @@ pub fn oi_symmetry_decrypt2(input: &[u8], key: &[u8; 16]) -> Result<Vec<u8>, Cry
     }
 
     let pad_size = usize::from(decrypted_buf[0] & 0b111);
+
+    // Prefixed with "pad_size", "padding", "salt"
     let start_loc = 1 + pad_size + SALT_LEN;
     let end_loc = len - ZERO_LEN;
     let zeros = &decrypted_buf[end_loc..];
 
+    // I know this is not constant time comparison, but anyway...
     return if zeros.iter().all(|&x| x == 0) {
         Ok(decrypted_buf[start_loc..end_loc].to_vec())
     } else {
@@ -89,7 +97,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn tencent_tea_basic() {
+    fn tc_tea_basic() {
         let input: [u8; 24] = [
             0x91, 0x09, 0x51, 0x62, 0xe3, 0xf5, 0xb6, 0xdc, //
             0x6b, 0x41, 0x4b, 0x50, 0xd1, 0xa5, 0xb8, 0x4e, //

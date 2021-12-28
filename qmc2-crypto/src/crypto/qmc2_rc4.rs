@@ -10,9 +10,11 @@ const RECOMMENDED_BLOCK_SIZE: usize = (1024 * 1024) * 5 / 2;
 static_assertions::const_assert_eq!(RECOMMENDED_BLOCK_SIZE % OTHER_SEGMENT_SIZE, 0);
 
 pub struct QMCStreamRC4Crypto {
+    /// RC4 seed box
     s: Vec<u8>,
-    n: usize,
+    /// Hash base, used to calculate some other key
     hash: u32,
+    /// RC4 key, though is used different than a standard RC4 algorithm...
     rc4_key: Vec<u8>,
 }
 
@@ -26,27 +28,33 @@ impl QMCStreamRC4Crypto {
     }
 
     #[inline]
+    /// Get next rc4 xor byte value
+    pub(self) fn rc4_derive(n: usize, s: &mut Vec<u8>, j: &mut usize, k: &mut usize) -> u8 {
+        *j = (*j + 1) % n;
+        *k = (usize::from(s[*j]) + *k) % n;
+
+        s.swap(*j, *k);
+
+        let index = usize::from(s[*j]) + usize::from(s[*k]);
+        s[index % n]
+    }
+
+    #[inline]
+    /// Encode first segment
     pub(self) fn encode_first_segment(&self, offset: usize, buf: &mut [u8]) {
+        let n = self.rc4_key.len();
         let mut offset = offset;
         for b in buf.iter_mut() {
-            let key1 = self.rc4_key[offset % self.n];
+            let key1 = self.rc4_key[offset % n];
             let key2 = self.calc_segment_key(offset, key1);
-            *b ^= self.rc4_key[key2 % self.n];
+            *b ^= self.rc4_key[key2 % n];
 
             offset += 1;
         }
     }
 
     #[inline]
-    pub(self) fn rc4_derive(n: usize, s: &mut Vec<u8>, j: &mut usize, k: &mut usize) -> u8 {
-        *j = (*j + 1) % n;
-        *k = (usize::from(s[*j]) + *k) % n;
-
-        s.swap(*j, *k);
-        s[(usize::from(s[*j]) + usize::from(s[*k])) % n]
-    }
-
-    #[inline]
+    /// Encode segments (other than the first one)
     pub(self) fn encode_other_segment(&self, offset: usize, buf: &mut [u8]) {
         // segment_id: 0~511 (inclusive)
         let seg_id = offset / OTHER_SEGMENT_SIZE;
@@ -55,7 +63,7 @@ impl QMCStreamRC4Crypto {
         let mut discard_count = self.calc_segment_key(seg_id, self.rc4_key[seg_id_small]) & 0x1FF;
         discard_count += offset % OTHER_SEGMENT_SIZE;
 
-        let n = self.n;
+        let n = self.rc4_key.len();
         let mut s = self.s.clone();
         let mut j = 0usize;
         let mut k = 0usize;
@@ -69,31 +77,33 @@ impl QMCStreamRC4Crypto {
     }
 
     #[inline]
-    pub(self) fn update_hash_base(&mut self) {
+    pub(self) fn calc_hash_base(data: &[u8]) -> u32 {
         let mut hash: u32 = 1;
 
-        for i in 0..self.n {
-            let value = u32::from(self.rc4_key[i]);
+        for &value in data.iter() {
+            let value = u32::from(value);
 
             // Skip if the next byte is zero.
             if value == 0 {
                 continue;
             }
 
-            let new_hash = hash.wrapping_mul(value);
-            if new_hash == 0 || new_hash <= hash {
+            // Naive overflow check - keeping as it is to maintain compatibility.
+            let next_hash = hash.wrapping_mul(value);
+            if next_hash == 0 || next_hash <= hash {
                 break;
             }
 
-            hash = new_hash;
+            hash = next_hash;
         }
 
-        self.hash = hash;
+        hash
     }
 }
 
 impl QMCStreamRC4Crypto {
     pub fn new(rc4_key: &[u8]) -> Self {
+        // n == rc4_key.len() == s.len()
         let n = rc4_key.len();
         let mut s = vec![0u8; n];
         for (i, b) in s.iter_mut().enumerate() {
@@ -101,19 +111,16 @@ impl QMCStreamRC4Crypto {
         }
 
         let mut j = 0usize;
-        for i in 0..n {
-            j = (usize::from(s[i]) + j + usize::from(rc4_key[i % n])) % n;
+        for (i, &key) in rc4_key.iter().enumerate() {
+            j = j.wrapping_add(s[i] as usize).wrapping_add(key as usize) % n;
             s.swap(i, j);
         }
 
-        let mut result = QMCStreamRC4Crypto {
+        QMCStreamRC4Crypto {
             s,
-            n,
-            hash: 1,
+            hash: QMCStreamRC4Crypto::calc_hash_base(rc4_key),
             rc4_key: rc4_key.to_vec(),
-        };
-        result.update_hash_base();
-        result
+        }
     }
 }
 
@@ -166,21 +173,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test1_update_hash_base() {
-        let crypto = QMCStreamRC4Crypto::new(&[1u8, 99]);
-        assert_eq!(crypto.hash, 1);
+    fn test1_calc_hash_base() {
+        let hash = QMCStreamRC4Crypto::calc_hash_base(&[1u8, 99]);
+        assert_eq!(hash, 1);
 
-        let crypto = QMCStreamRC4Crypto::new(&[
+        let hash = QMCStreamRC4Crypto::calc_hash_base(&[
             0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 8
             0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 16
         ]);
-        assert_eq!(crypto.hash, 0xfc05fc01);
-    }
-
-    #[test]
-    fn test2_for_loop() {
-        for i in (0..13).step_by(5) {
-            println!("i = {}", i)
-        }
+        assert_eq!(hash, 0xfc05fc01);
     }
 }

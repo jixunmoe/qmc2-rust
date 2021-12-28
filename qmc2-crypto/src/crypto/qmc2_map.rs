@@ -13,8 +13,9 @@ impl QMCStreamMapCrypto {
     }
 
     #[inline]
-    pub(self) fn scramble_by_index(value: u8, index: u8) -> u8 {
-        let rotation = u32::from(index.wrapping_add(4)) & 0b111;
+    /// Last step of the key derivation, scramble the value by its key used.
+    pub(self) fn scramble_by_index(value: u8, index: usize) -> u8 {
+        let rotation = (index as u32).wrapping_add(4) & 0b111;
 
         let left = value.wrapping_shl(rotation);
         let right = value.wrapping_shr(rotation);
@@ -31,7 +32,7 @@ impl QMCStreamMapCrypto {
         }
 
         let index = (offset_local * offset_local + 71214) % self.key.len();
-        QMCStreamMapCrypto::scramble_by_index(self.key[index], index as u8)
+        QMCStreamMapCrypto::scramble_by_index(self.key[index], index)
     }
 }
 
