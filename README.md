@@ -12,9 +12,10 @@ an anti-pattern way.
 
 ## TODO
 
-- [ ] Add more tests
+- [x] Add more tests
 - [ ] Understand how to generate test coverage
 - [ ] Setup GitHub Actions to build & test automatically
-- [ ] Extract Tencent TEA code and publish to crates.io
+- [x] Extract Tencent TEA code and publish to crates.io - [tc_tea][tc_tea]
 
 [gh_qmc2]: https://github.com/jixunmoe/qmc2
+[tc_tea]: https://crates.io/crates/tc_tea
