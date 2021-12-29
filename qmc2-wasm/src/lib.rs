@@ -55,6 +55,11 @@ pub fn decrypt_factory(ekey: String) -> Result<QMC2CryptoWrapper, JsValue> {
 }
 
 #[wasm_bindgen]
+pub fn __init() {
+    utils::set_panic_hook();
+}
+
+#[wasm_bindgen]
 pub fn add(a: u32, b: u32) -> u32 {
     a + b - 1
 }

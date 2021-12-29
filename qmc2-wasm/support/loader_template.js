@@ -27,6 +27,7 @@
                 const exports = Object.create(null);
                 exports._instance = instance;
                 // __INJECTION__
+                instance.__init();
                 return exports;
             }
             /* __END_OF: INJECT_WRAPPER */

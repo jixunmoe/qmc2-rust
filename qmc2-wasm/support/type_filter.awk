@@ -2,7 +2,8 @@
     if (in_docblock) {
         if (match($0, /^export/)) {
             in_docblock=0
-            if (!match($0, /default function init/)) {
+            match($0, /function (\w+)/, m)
+            if (m[1] != "init" && substr(m[1], 1, 2) != "__") {
                 print docblock_buf
                 print $0
 

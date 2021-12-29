@@ -42,20 +42,25 @@ BEGIN {
 }
 
 {
-    if (is_export) {
+    if (skip_private_method) {
+        if ($0 == "}") skip_private_method = 0
+    } else if (is_export) {
         if ($0 == "}") is_export = 0
         gsub(/wasm/, "instance")
         export_buf = export_buf "\n" export_indent $0
     } else if (/^export (function|class)/) {
-        export_buf = export_buf "\n" unindent(docblock_buf)
-        docblock_buf = ""
-
         is_doc=0
         is_export=1
-        match($0, /export (function|class) (\w+)/, m)
-        export_names = export_names " " m[2]
-        export_text = gensub(/export (function|class) (\w+)/, "exports.\\2 = \\1 \\2", "g")
-        export_buf = export_buf "\n" export_indent export_text
+        match($0, /export (function|class) (\w+)/, m);
+        if (substr(m[2], 1, 2) == "__") {
+            skip_private_method=1
+        } else {
+            export_names = export_names " " m[2]
+            export_text = gensub(/export (function|class) (\w+)/, "exports.\\2 = \\1 \\2", "g")
+            export_buf = export_buf "\n" unindent(docblock_buf)
+            export_buf = export_buf "\n" export_indent export_text
+        }
+        docblock_buf = ""
     } else if (is_doc) {
         docblock_buf = docblock_buf "\n" code_indent $0
         if ($0 == " */") {
