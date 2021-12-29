@@ -11,6 +11,23 @@ pub struct Detection {
     pub song_id: String,
 }
 
+impl Detection {
+    #[inline]
+    pub fn new(eof_position: i64, ekey_position: i64, ekey_len: usize, song_id: String) -> Self {
+        Detection {
+            eof_position,
+            ekey_position,
+            ekey_len,
+            song_id,
+        }
+    }
+
+    #[inline]
+    pub fn blank() -> Self {
+        Detection::new(0, 0, 0, "".to_string())
+    }
+}
+
 // 'QTag' in LittleEndian
 const MAGIC_QMC2_QTAG: u32 = 0x67615451;
 

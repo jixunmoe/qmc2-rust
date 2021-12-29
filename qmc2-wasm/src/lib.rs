@@ -12,22 +12,44 @@ use wasm_bindgen::prelude::*;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
+pub struct DetectionWrapper {
+    #[wasm_bindgen(readonly)]
+    pub eof_position: i64,
+    #[wasm_bindgen(readonly)]
+    pub ekey_position: i64,
+    #[wasm_bindgen(readonly)]
+    pub ekey_len: usize,
+    song_id: String,
 }
 
-#[wasm_bindgen(js_name = Detection)]
-pub struct DetectionWrapper(Detection);
+impl DetectionWrapper {
+    pub(crate) fn from(d: Detection) -> Self {
+        DetectionWrapper {
+            eof_position: d.eof_position,
+            ekey_position: d.ekey_position,
+            ekey_len: d.ekey_len,
+            song_id: d.song_id,
+        }
+    }
+}
 
 #[wasm_bindgen]
-pub fn get_detection_size() -> usize {
+impl DetectionWrapper {
+    #[wasm_bindgen]
+    pub fn get_song_id(&self) -> String {
+        self.song_id.as_str().into()
+    }
+}
+
+#[wasm_bindgen]
+pub fn get_recommended_detection_size() -> usize {
     qmc2::detection::RECOMMENDED_DETECTION_SIZE
 }
 
 #[wasm_bindgen(catch)]
 pub fn detect(buf: &[u8]) -> Result<DetectionWrapper, JsValue> {
     qmc2::detection::detect(buf)
-        .map(DetectionWrapper)
+        .map(DetectionWrapper::from)
         .map_err(|e| JsValue::from(e.to_string()))
 }
 
