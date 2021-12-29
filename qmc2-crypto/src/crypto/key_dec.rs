@@ -95,7 +95,7 @@ mod tests {
     fn test_parse_ekey() {
         let expected_key = "This is a test key for test purpose :D";
         let ekey = "VGhpcyBpcyBHFWEh4cjZ1Vi7rJ56XeoPlqGM1sxBGPg7mt89umKclFBr9iqfmFdS";
-        let decoded_key = parse_ekey(&ekey).unwrap();
+        let decoded_key = parse_ekey(ekey).unwrap();
         assert_eq!(std::str::from_utf8(&*decoded_key).unwrap(), expected_key);
     }
 }
