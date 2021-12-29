@@ -101,9 +101,9 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "tc_tea"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1994a44763653903a60e86109149133e8388186f92cf20a919ac211956781c61"
+checksum = "cab26285e70ee5cbec8582c76b8124dfe65b564b43dad14b9caca6fd127d66d2"
 dependencies = [
  "rand",
  "rand_chacha",
