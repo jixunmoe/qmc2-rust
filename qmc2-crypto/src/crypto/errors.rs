@@ -4,23 +4,11 @@ use std::fmt;
 pub enum CryptoError {
     EKeyParseError,
     QMC2KeyDeriveError,
-    TEAInputSizeError(usize, usize),
-    TEAZeroVerificationError,
 }
 
 impl fmt::Display for CryptoError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            CryptoError::TEAZeroVerificationError => {
-                write!(f, "tc_tea: verification of zero bytes failed")
-            }
-            CryptoError::TEAInputSizeError(len, min_size) => {
-                write!(
-                    f,
-                    "tc_tea: input size {} should have {} bytes and be multiple of 8.",
-                    len, min_size
-                )
-            }
             CryptoError::EKeyParseError => {
                 write!(f, "Failed to parse ekey")
             }
