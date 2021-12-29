@@ -1,7 +1,7 @@
 mod crypto;
 
 pub use crypto::detection;
-pub use crypto::errors::CryptoError;
+pub use crypto::errors;
 pub use crypto::key_dec::*;
 pub use crypto::qmc2::decrypt_factory;
 

@@ -4,11 +4,11 @@ use std::str::from_utf8;
 use super::errors::DetectionError;
 
 #[derive(std::fmt::Debug, Eq, PartialEq)]
-pub struct Detection<'a> {
+pub struct Detection {
     pub eof_position: i64,
     pub ekey_position: i64,
     pub ekey_len: usize,
-    pub song_id: &'a str,
+    pub song_id: String,
 }
 
 // 'QTag' in LittleEndian
@@ -18,7 +18,7 @@ fn find_comma(buf: &[u8], start: usize, end: usize) -> Option<usize> {
     buf[start..end]
         .iter()
         .position(|&b| b == b',')
-        .and_then(|p| Some(p + start))
+        .map(|p| p + start)
 }
 
 pub const RECOMMENDED_DETECTION_SIZE: usize = 0x40;
@@ -35,7 +35,7 @@ fn detect_v1(buf: &[u8]) -> Result<Detection, DetectionError> {
         eof_position: ekey_loc,
         ekey_position: ekey_loc,
         ekey_len: key_size,
-        song_id: "",
+        song_id: "".into(),
     })
 }
 
@@ -62,7 +62,7 @@ fn detect_v2(buf: &[u8]) -> Result<Detection, DetectionError> {
         eof_position: ekey_loc,
         ekey_position: ekey_loc,
         ekey_len,
-        song_id,
+        song_id: song_id.into(),
     })
 }
 
@@ -118,7 +118,7 @@ mod tests {
                 eof_position: 0,
                 ekey_position: 0,
                 ekey_len: 4,
-                song_id: "18",
+                song_id: "18".into(),
             }
         );
     }
@@ -140,7 +140,7 @@ mod tests {
                 eof_position: -16,
                 ekey_position: -16,
                 ekey_len: 20,
-                song_id: "27",
+                song_id: "27".into(),
             }
         );
     }
@@ -163,7 +163,7 @@ mod tests {
                 eof_position: -16,
                 ekey_position: -16,
                 ekey_len: 20,
-                song_id: "",
+                song_id: "".into(),
             }
         );
     }
@@ -185,7 +185,7 @@ mod tests {
                 eof_position: -16,
                 ekey_position: -16,
                 ekey_len: 20,
-                song_id: "",
+                song_id: "".into(),
             }
         );
     }
@@ -204,7 +204,7 @@ mod tests {
                 eof_position: 0,
                 ekey_position: 0,
                 ekey_len: 4,
-                song_id: "",
+                song_id: "".into(),
             }
         );
     }
@@ -223,7 +223,7 @@ mod tests {
                 eof_position: -0x0300 + 4,
                 ekey_position: -0x0300 + 4,
                 ekey_len: 0x300,
-                song_id: "",
+                song_id: "".into(),
             }
         );
     }
