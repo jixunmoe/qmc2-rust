@@ -169,6 +169,28 @@ mod tests {
     }
 
     #[test]
+    fn test_detect_v2_ekey_invalid_songid_utf8() {
+        let input = [
+            b"aaaa," as &[u8],     // ekey
+            b"\xe6\xad,",          // song id (broken utf-8)
+            b"2,",                 // version identifier?
+            &26_i32.to_be_bytes(), // size of metadata (big endian)
+            b"QTag",               // EOF Magic
+        ]
+        .concat();
+        let result = detect(&input).unwrap();
+        assert_eq!(
+            result,
+            Detection {
+                eof_position: -16,
+                ekey_position: -16,
+                ekey_len: 20,
+                song_id: "",
+            }
+        );
+    }
+
+    #[test]
     fn test_detect_fallback_to_v1() {
         let input = [
             b'a', b'a', b'a', b'a', // ekey

@@ -180,6 +180,15 @@ mod tests {
             0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 16
         ]);
         assert_eq!(hash, 0xfc05fc01);
+
+        // should ignore zeros
+        let hash = QMCStreamRC4Crypto::calc_hash_base(&[
+            0x00, //
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //
+            0x00, //
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //
+        ]);
+        assert_eq!(hash, 0xfc05fc01);
     }
 
     #[test]
@@ -255,7 +264,7 @@ mod tests {
             *p = i as u8
         }
         let crypto = QMCStreamRC4Crypto::new(&rc4_key);
-        let mut data = vec![0u8; OTHER_SEGMENT_SIZE];
+        let mut data = vec![0u8; OTHER_SEGMENT_SIZE + 1];
         crypto.decrypt(OTHER_SEGMENT_SIZE, &mut data);
         // Only checks for the first 16 bytes
         assert_eq!(
