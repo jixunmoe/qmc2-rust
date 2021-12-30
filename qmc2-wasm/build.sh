@@ -10,7 +10,7 @@ if [ "$1" = "--build" ]; then
     --scope jixun \
     --out-name qmc2_crypto \
     --out-dir pkg/web
-  (cd npm; npm ci && npm run build:doc)
+  (cd npm; npm run build:doc)
 fi
 
 cp pkg/web/qmc2_crypto_bg.wasm npm/
