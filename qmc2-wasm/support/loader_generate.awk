@@ -50,11 +50,11 @@ BEGIN {
         export_buf = export_buf "\n" export_indent $0
     } else if (/^export (function|class)/) {
         is_doc=0
-        is_export=1
         match($0, /export (function|class) (\w+)/, m);
         if (substr(m[2], 1, 2) == "__") {
             skip_private_method=1
         } else {
+            is_export=1
             export_names = export_names " " m[2]
             export_text = gensub(/export (function|class) (\w+)/, "exports.\\2 = \\1 \\2", "g")
             export_buf = export_buf "\n" unindent(docblock_buf)
@@ -68,7 +68,7 @@ BEGIN {
             print docblock_buf
             docblock_buf = ""
         }
-    } else if (/^\/\*\*/) {
+    } else if ($0 == "/**") {
         is_doc=1
         docblock_buf = code_indent $0
     } else if (/^export default/ || /^(let )?cachedTextDecoder/) {
