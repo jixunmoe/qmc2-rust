@@ -10,6 +10,7 @@ if [ "$1" = "--build" ]; then
     --scope jixun \
     --out-name qmc2_crypto \
     --out-dir pkg/web
+  (cd npm; npm ci && npm run build:doc)
 fi
 
 cp pkg/web/qmc2_crypto_bg.wasm npm/
@@ -24,3 +25,5 @@ TEMPLATE="$(env \
 awk -v template="$TEMPLATE" -f support/loader_generate.awk < pkg/web/qmc2_crypto.js > npm/qmc2_crypto_embed.js
 awk -f support/type_filter.awk < pkg/web/qmc2_crypto.d.ts > npm/qmc2_crypto_embed.d.ts
 cp npm/qmc2_crypto_embed.js ../public/
+
+cp -R npm/docs ../public/

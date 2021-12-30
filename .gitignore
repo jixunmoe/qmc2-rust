@@ -6,3 +6,4 @@ target/
 .vscode/
 
 public/qmc2_crypto_embed.js
+docs/
