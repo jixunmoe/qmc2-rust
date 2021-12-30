@@ -20,3 +20,4 @@ TEMPLATE="$(env \
 
 awk -v template="$TEMPLATE" -f support/loader_generate.awk < pkg/web/qmc2_crypto.js > npm/qmc2_crypto_embed.js
 awk -f support/type_filter.awk < pkg/web/qmc2_crypto.d.ts > npm/qmc2_crypto_embed.d.ts
+cp npm/qmc2_crypto_embed.js ../public/

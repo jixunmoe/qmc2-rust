@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-cmn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="keywords" content="mgg, mgg0, mgg1, mflac, mflac0, mflac1" />
+    <meta name="description" content="解密 mgg 文件, 解密 mflac 文件" />
+    <title>QMC2-WASM</title>
+    <link rel="stylesheet" href="./app.css">
+  </head>
+  <body>
+    <div id="dragroot"></div>
+    <header>
+      <h1>QMC2-WASM <small>(实验性)</small></h1>
+    </header>
+
+    <main>
+      <p>用于解密 <code>mflac</code> 与 <code>mgg</code> 文件的小工具。</p>
+      <p>
+        <label>
+          <input type="file" id="input" />
+          <button type="button" id="btn_start">选择需要解密的文件</button>
+        </label>
+      </p>
+      <p><progress id="progress" max="100" value="0"></progress></p>
+      <p><audio id="player" controls></audio></p>
+      <p><a href="#" id="download">没有文件</a></p>
+      <hr />
+    </main>
+
+    <footer lang="en">
+      <p style="font-style: italic">
+        Part of
+        <a target="_blank" href="https://github.com/jixunmoe/qmc2-rust/">QMC2-rust</a>
+        project. <br />
+        Licensed under the
+        <a
+          target="_blank"
+          href="https://github.com/jixunmoe/qmc2/blob/main/LICENSE"
+        >MIT OR Apache-2.0
+        </a>
+        License.
+      </p>
+    </footer>
+
+    <section id="backend-info">
+      QMC2-Crypto: 
+      <code id="qmc2-backend">加载中</code>
+    </section>
+    <script defer async src="./app.js"></script>
+  </body>
+</html>
