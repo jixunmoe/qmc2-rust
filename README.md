@@ -13,8 +13,8 @@ an anti-pattern way.
 ## TODO
 
 - [x] Add more tests
-- [ ] Understand how to generate test coverage
-- [ ] Setup GitHub Actions to build & test automatically
+- [x] Understand how to generate test coverage
+- [x] Setup GitHub Actions to build & test automatically
 - [x] Extract Tencent TEA code and publish to crates.io - [tc_tea][tc_tea]
 
 [gh_qmc2]: https://github.com/jixunmoe/qmc2
