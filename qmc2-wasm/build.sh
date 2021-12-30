@@ -25,7 +25,6 @@ awk -v template="$TEMPLATE" -f support/loader_generate.awk < pkg/web/qmc2_crypto
 awk -f support/type_filter.awk < pkg/web/qmc2_crypto.d.ts > npm/qmc2_crypto_embed.d.ts
 cp npm/qmc2_crypto_embed.js ../public/
 
-cp -R npm/docs ../public/
-
-# Generate doc
+# Generate doc & copy them
 (cd npm; npm run build:doc)
+cp -R npm/docs ../public/
