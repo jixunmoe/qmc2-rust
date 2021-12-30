@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -e
+pushd "$(realpath "$(dirname "$0")")"
+
 if [ "$1" = "--build" ]; then
   wasm-pack build \
     --target web \
