@@ -13,11 +13,11 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub struct DetectionWrapper {
-    #[wasm_bindgen(readonly)]
-    pub eof_position: i64,
-    #[wasm_bindgen(readonly)]
-    pub ekey_position: i64,
-    #[wasm_bindgen(readonly)]
+    #[wasm_bindgen]
+    pub eof_position: i32,
+    #[wasm_bindgen]
+    pub ekey_position: i32,
+    #[wasm_bindgen]
     pub ekey_len: usize,
     song_id: String,
 }
@@ -25,8 +25,8 @@ pub struct DetectionWrapper {
 impl DetectionWrapper {
     pub(crate) fn from(d: Detection) -> Self {
         DetectionWrapper {
-            eof_position: d.eof_position,
-            ekey_position: d.ekey_position,
+            eof_position: d.eof_position as i32,
+            ekey_position: d.ekey_position as i32,
             ekey_len: d.ekey_len,
             song_id: d.song_id,
         }
