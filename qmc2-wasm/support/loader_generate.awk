@@ -35,7 +35,7 @@ BEGIN {
     code_indent=sprintf("%12s","");
     export_indent=sprintf("%8s","");
     export_buf="";
-    export_names="";
+    export_glue="";
 
     parse_template(template, tpl)
     print tpl["prelude"]
@@ -45,9 +45,13 @@ BEGIN {
     if (skip_private_method) {
         if ($0 == "}") skip_private_method = 0
     } else if (is_export) {
-        if ($0 == "}") is_export = 0
         gsub(/wasm/, "instance")
         export_buf = export_buf "\n" export_indent $0
+        if ($0 == "}") {
+            is_export = 0
+            export_buf = export_buf "\n" \
+                export_indent "exports." export_name " = " export_name ";\n"
+        }
     } else if (/^export (function|class)/) {
         is_doc=0
         match($0, /export (function|class) (\w+)/, m);
@@ -55,10 +59,15 @@ BEGIN {
             skip_private_method=1
         } else {
             is_export=1
-            export_names = export_names " " m[2]
-            export_text = gensub(/export (function|class) (\w+)/, "exports.\\2 = \\1 \\2", "g")
+            export_name = m[2]
             export_buf = export_buf "\n" unindent(docblock_buf)
-            export_buf = export_buf "\n" export_indent export_text
+            export_buf = export_buf "\n" export_indent gensub(/^export /, "", 1)
+
+            # Generate glue
+            export_glue = export_glue \
+                "\n" export_indent "Object.defineProperty(exports, '" export_name "', {" \
+                "\n" export_indent "    get: function () { return __last_inst." export_name "; }" \
+                "\n" export_indent "});"
         }
         docblock_buf = ""
     } else if (is_doc) {
@@ -88,15 +97,6 @@ END {
     injection_wrapper = indent(indent(export_buf))
     print gensub(/__INJECTION__/, "\n" injection_wrapper, 1, tpl["inject_wrapper"])
     print tpl["close_exports"]
-
-    split(substr(export_names, 2), export_name_list, " ")
-    for (i in export_name_list) {
-        printf "        Object.defineProperty(exports, '%s', {\n",export_name_list[i]
-        printf "            get: function () {\n"
-        printf "                return __last_inst.%s;\n",export_name_list[i]
-        printf "            }\n"
-        printf "        });\n"
-    }
-
+    print export_glue
     print tpl["ending"]
 }
